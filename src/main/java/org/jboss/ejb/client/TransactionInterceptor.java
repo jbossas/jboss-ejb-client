@@ -180,7 +180,9 @@ public final class TransactionInterceptor implements EJBClientInterceptor {
             }
         }
 
-        setupStickinessIfRequired(context, transactionPolicy.propagate(), transaction);
+        final boolean propagate = transactionPolicy.propagate() && !context.isSuppressTxPropagation();
+
+        setupStickinessIfRequired(context, propagate, transaction);
 
         if (transactionPolicy.failIfTransactionAbsent()) {
             if (transaction == null) {
@@ -192,7 +194,7 @@ public final class TransactionInterceptor implements EJBClientInterceptor {
                 throw Logs.TXN.txAlreadyAssociatedWithThread();
             }
         }
-        if (transactionPolicy.propagate()) {
+        if (propagate) {
             if (Logs.INVOCATION.isDebugEnabled()) {
                 Logs.INVOCATION.debugf("TransactionEJBClientInterceptor: Calling  handleInvocation: setting context transaction: transaction = %s", transaction);
             }

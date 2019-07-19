@@ -89,20 +89,21 @@ final class ConfigurationBasedEJBClientContextSelector {
                 if (! validNamespaces.contains(namespaceURI) || ! streamReader.getLocalName().equals("jboss-ejb-client")) {
                     throw streamReader.unexpectedElement();
                 }
-                parseEJBClientType(streamReader, builder);
+                parseEJBClientType(streamReader, builder, namespaceURI);
                 return;
             }
             throw streamReader.unexpectedContent();
         }
     }
 
-    private static void parseEJBClientType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder) throws ConfigXMLParseException {
+    private static void parseEJBClientType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder, final String namespaceURI) throws ConfigXMLParseException {
         if (streamReader.getAttributeCount() > 0) {
             throw streamReader.unexpectedAttribute(0);
         }
         boolean gotInvocationTimeout = false;
         boolean gotGlobalInterceptors = false;
         boolean gotConnections = false;
+        boolean gotTransactionPropagation = false;
         boolean gotClusterNodeSelector = false;
         boolean gotDeploymentNodeSelector = false;
         for (;;) {
@@ -120,7 +121,7 @@ final class ConfigurationBasedEJBClientContextSelector {
                 else if (localName.equals("global-interceptors") && ! gotGlobalInterceptors && inValidNamespace(validNamespaces, configuredNamespace)) {
                     gotGlobalInterceptors = true;
                     parseInterceptorsType(streamReader, builder);
-                } 
+                }
                 else if (localName.equals("connections") && ! gotConnections && inValidNamespace(validNamespaces, configuredNamespace)) {
                     gotConnections = true;
                     parseConnectionsType(streamReader, builder);
@@ -133,6 +134,10 @@ final class ConfigurationBasedEJBClientContextSelector {
                     gotClusterNodeSelector = true;
                     parseClusterNodeSelectorType(streamReader, builder);
                 }
+                else if (namespaceURI.equals(NS_EJB_CLIENT_3_1) && localName.equals("transaction-propagation") && !gotTransactionPropagation) {
+                    gotTransactionPropagation = true;
+                    parseTransactionPropagationType(streamReader, builder);
+                }
                 else {
                     throw streamReader.unexpectedElement();
                 }
@@ -144,10 +149,32 @@ final class ConfigurationBasedEJBClientContextSelector {
         }
     }
 
+    private static void parseTransactionPropagationType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder) throws ConfigXMLParseException {
+        final int attributeCount = streamReader.getAttributeCount();
+        boolean suppress;
+        for (int i = 0; i < attributeCount; i++) {
+            if (streamReader.getAttributeNamespace(i) != null && ! streamReader.getAttributeNamespace(i).isEmpty()) {
+                throw streamReader.unexpectedAttribute(i);
+            }
+            final String name = streamReader.getAttributeLocalName(i);
+            if (name.equals("suppress")) {
+                suppress = streamReader.getBooleanAttributeValueResolved(i);
+            } else {
+                throw streamReader.unexpectedAttribute(i);
+            }
+            builder.setSuppressTxPropagation(suppress);
+        }
+        final int next = streamReader.nextTag();
+        if (next == END_ELEMENT) {
+            return;
+        }
+        throw streamReader.unexpectedElement();
+    }
+
     private static boolean inValidNamespace(Set<String> validNamespaces, String configuredNamespace) {
         return validNamespaces.contains(configuredNamespace);
     }
-    
+
     private static void parseInvocationTimeoutType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder) throws ConfigXMLParseException {
         final int attributeCount = streamReader.getAttributeCount();
         int timeout = -1 ;
@@ -179,7 +206,7 @@ final class ConfigurationBasedEJBClientContextSelector {
         for (;;) {
             final int next = streamReader.nextTag();
             if (next == START_ELEMENT) {
-                if (! streamReader.getNamespaceURI().equals(NS_EJB_CLIENT_3_0) || ! streamReader.getLocalName().equals("interceptor")) {
+                if (! validNamespaces.contains(streamReader.getNamespaceURI()) || ! streamReader.getLocalName().equals("interceptor")) {
                     throw streamReader.unexpectedElement();
                 }
                 parseInterceptorType(streamReader, builder);
@@ -247,7 +274,7 @@ final class ConfigurationBasedEJBClientContextSelector {
         final Class<? extends T> clazz;
         try {
             clazz = Class.forName(className, false, cl).asSubclass(interfaceToImplement);
-            
+
         } catch (ClassNotFoundException | ClassCastException e) {
             throw new ConfigXMLParseException(e);
         }
@@ -276,7 +303,7 @@ final class ConfigurationBasedEJBClientContextSelector {
         for (;;) {
             final int next = streamReader.nextTag();
             if (next == START_ELEMENT) {
-                if (! streamReader.getNamespaceURI().equals(NS_EJB_CLIENT_3_0)) {
+                if (! validNamespaces.contains(streamReader.getNamespaceURI())) {
                     throw streamReader.unexpectedElement();
                 }
                 final String localName = streamReader.getLocalName();
@@ -307,7 +334,7 @@ final class ConfigurationBasedEJBClientContextSelector {
         }
         final int next = streamReader.nextTag();
         if (next == START_ELEMENT) {
-            if (! streamReader.getNamespaceURI().equals(NS_EJB_CLIENT_3_0)) {
+            if (! validNamespaces.contains(streamReader.getNamespaceURI())) {
                 throw streamReader.unexpectedElement();
             }
             final String localName = streamReader.getLocalName();

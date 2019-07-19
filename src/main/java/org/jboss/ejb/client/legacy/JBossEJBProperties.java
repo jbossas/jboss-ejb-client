@@ -80,6 +80,7 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
     private static final String DEFAULT_ENDPOINT_NAME = "config-based-ejb-client-endpoint";
 
     private static final String PROPERTY_KEY_INVOCATION_TIMEOUT = "invocation.timeout";
+    private static final String PROPERTY_KEY_SUPPRESS_TX_PROPAGATION = "transaction.propagation.suppress";
     private static final String PROPERTY_KEY_RECONNECT_TASKS_TIMEOUT = "reconnect.tasks.timeout";
     private static final String PROPERTY_KEY_DEPLOYMENT_NODE_SELECTOR = "deployment.node.selector";
 
@@ -172,6 +173,7 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
     // Other EJB parameters
 
     private final long invocationTimeout;
+    private final boolean suppressTxPropagation;
     private final long reconnectTimeout;
     private final String deploymentNodeSelectorClassName;
     private final boolean defaultConnectEagerly;
@@ -186,6 +188,7 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
         this.deploymentNodeSelectorSupplier = builder.deploymentNodeSelectorSupplier;
         this.clusterConfigurations = builder.clusterConfigurations;
         this.invocationTimeout = builder.invocationTimeout;
+        this.suppressTxPropagation = builder.suppressTxPropagation;
         this.reconnectTimeout = builder.reconnectTimeout;
         this.deploymentNodeSelectorClassName = builder.deploymentNodeSelectorClassName;
         this.connectionList = builder.connectionList;
@@ -230,6 +233,10 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
 
     public long getInvocationTimeout() {
         return invocationTimeout;
+    }
+
+    public boolean isSuppressTxPropagation() {
+        return suppressTxPropagation;
     }
 
     public long getReconnectTimeout() {
@@ -282,6 +289,14 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
         }
     }
 
+    private static boolean getBooleanValueFromProperties(final Properties properties, final String name, final boolean defaultValue) {
+        final String stringValue = getProperty(properties, name, null, true);
+        if (stringValue == null) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(stringValue);
+    }
+
     private static String getProperty(final Properties properties, final String propertyName, final String defaultValue, final boolean expand) {
         final String str = properties.getProperty(propertyName);
         if (str == null) {
@@ -323,6 +338,9 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
 
         // invocation timeout
         builder.setInvocationTimeout(getLongValueFromProperties(properties, PROPERTY_KEY_INVOCATION_TIMEOUT, -1L));
+
+        // tx propagation suppression
+        builder.setSuppressTxPropagation(getBooleanValueFromProperties(properties, PROPERTY_KEY_SUPPRESS_TX_PROPAGATION, false));
 
         // reconnect timeout
         builder.setReconnectTimeout(getLongValueFromProperties(properties, PROPERTY_KEY_RECONNECT_TASKS_TIMEOUT, -1L));
@@ -470,6 +488,7 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
         List<ConnectionConfiguration> connectionList;
         Map<String, ClusterConfiguration> clusterConfigurations;
         long invocationTimeout;
+        boolean suppressTxPropagation;
         long reconnectTimeout;
         String deploymentNodeSelectorClassName;
         ExceptionSupplier<DeploymentNodeSelector, ReflectiveOperationException> deploymentNodeSelectorSupplier;
@@ -504,6 +523,11 @@ public final class JBossEJBProperties implements Contextual<JBossEJBProperties> 
 
         Builder setInvocationTimeout(final long invocationTimeout) {
             this.invocationTimeout = invocationTimeout;
+            return this;
+        }
+
+        Builder setSuppressTxPropagation(final boolean suppressTxPropagation) {
+            this.suppressTxPropagation = suppressTxPropagation;
             return this;
         }
 
