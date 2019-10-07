@@ -110,24 +110,6 @@ public interface ClusterNodeSelector {
     }
 
     /**
-     * Always try to round-robin among connected nodes.  If no nodes are connected, the fallback is used.    Note
-     * that the round-robin node count may be shared among multiple node sets, thus certain specific usage patterns
-     * <em>may</em> defeat the round-robin behavior.
-     *
-     * @param fallback the fallback selector (must not be {@code null})
-     * @return the node selector (not {@code null})
-     */
-    static ClusterNodeSelector useRoundRobinConnectedNode(ClusterNodeSelector fallback) {
-        Assert.checkNotNullParam("fallback", fallback);
-        return new ClusterNodeSelector() {
-            private final AtomicInteger count = new AtomicInteger();
-            public String selectNode(final String clusterName, final String[] connectedNodes, final String[] totalAvailableNodes) {
-                return connectedNodes.length > 0 ? connectedNodes[Math.floorMod(count.getAndIncrement(), connectedNodes.length)] : fallback.selectNode(clusterName, connectedNodes, totalAvailableNodes);
-            }
-        };
-    }
-
-    /**
      * Determine the action to take based on a threshold of minimum connections.  If the minimum is met, <em>or</em> if
      * there are no more available nodes to choose from, the {@code met} selector is used, otherwise the {@code unmet}
      * selector is used.
@@ -161,32 +143,6 @@ public interface ClusterNodeSelector {
             available.removeAll(connected);
             assert ! available.isEmpty();
             return available.get(ThreadLocalRandom.current().nextInt(available.size()));
-        };
-    }
-
-    /**
-     * Always try to use an unconnected node in a round-robin fashion.  If all nodes are connected, the fallback is used.
-     *
-     * @param fallback the selector to use if all available nodes are connected (must not be {@code null})
-     * @return the node selector (not {@code null})
-     */
-    static ClusterNodeSelector useRoundRobinUnconnectedNode(ClusterNodeSelector fallback) {
-        Assert.checkNotNullParam("fallback", fallback);
-        return new ClusterNodeSelector() {
-            private final AtomicInteger count = new AtomicInteger();
-            public String selectNode(final String clusterName, final String[] connectedNodes, final String[] totalAvailableNodes) {
-                if (connectedNodes.length == totalAvailableNodes.length) {
-                    // totalAvailableNodes contains all connectedNodes; if their sizes are equal then all nodes must be connected
-                    return fallback.selectNode(clusterName, connectedNodes, totalAvailableNodes);
-                }
-                final HashSet<String> connected = new HashSet<>(connectedNodes.length);
-                Collections.addAll(connected, connectedNodes);
-                final ArrayList<String> available = new ArrayList<>(totalAvailableNodes.length);
-                Collections.addAll(available, totalAvailableNodes);
-                available.removeAll(connected);
-                assert ! available.isEmpty();
-                return available.get(Math.floorMod(count.getAndIncrement(), connectedNodes.length));
-            }
         };
     }
 }

@@ -54,29 +54,6 @@ public interface DeploymentNodeSelector {
     String selectNode(final String[] eligibleNodes, final String appName, final String moduleName, final String distinctName);
 
     /**
-     * Create a deployment node selector that prefers one or more favorite nodes, falling back to another selector if
-     * none of the favorites are found.
-     *
-     * @param favorites the favorite nodes, in decreasing order of preference (must not be {@code null})
-     * @param fallback the fallback selector (must not be {@code null})
-     * @return the selector (not {@code null})
-     */
-    static DeploymentNodeSelector favorite(Collection<String> favorites, DeploymentNodeSelector fallback) {
-        Assert.checkNotNullParam("favorites", favorites);
-        Assert.checkNotNullParam("fallback", fallback);
-        return (eligibleNodes, appName, moduleName, distinctName) -> {
-            final HashSet<String> set = new HashSet<String>(eligibleNodes.length);
-            Collections.addAll(set, eligibleNodes);
-            for (String favorite : favorites) {
-                if (set.contains(favorite)) {
-                    return favorite;
-                }
-            }
-            return fallback.selectNode(eligibleNodes, appName, moduleName, distinctName);
-        };
-    }
-
-    /**
      * A deployment node selector which prefers the first node always.  This will generally avoid load balancing in most
      * cases.
      */
