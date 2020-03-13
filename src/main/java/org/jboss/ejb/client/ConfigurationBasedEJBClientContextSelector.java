@@ -52,10 +52,11 @@ final class ConfigurationBasedEJBClientContextSelector {
     private static final String NS_EJB_CLIENT_3_0 = "urn:jboss:wildfly-client-ejb:3.0";
     private static final String NS_EJB_CLIENT_3_1 = "urn:jboss:wildfly-client-ejb:3.1";
     private static final String NS_EJB_CLIENT_3_2 = "urn:jboss:wildfly-client-ejb:3.2";
+    private static final String NS_EJB_CLIENT_3_3 = "urn:jboss:wildfly-client-ejb:3.3";
     private static final String NS_INCORRECT = "urn:jboss:ejb-client:3.0";
 
     private static final Set<String> validNamespaces = new HashSet<>(Arrays.asList(NS_EJB_CLIENT_3_0, NS_EJB_CLIENT_3_1,
-            NS_EJB_CLIENT_3_2));
+            NS_EJB_CLIENT_3_2, NS_EJB_CLIENT_3_3));
 
     static {
         configuredContext = loadConfiguration();
@@ -91,20 +92,21 @@ final class ConfigurationBasedEJBClientContextSelector {
                 if (! validNamespaces.contains(namespaceURI) || ! streamReader.getLocalName().equals("jboss-ejb-client")) {
                     throw streamReader.unexpectedElement();
                 }
-                parseEJBClientType(streamReader, builder);
+                parseEJBClientType(streamReader, builder, namespaceURI);
                 return;
             }
             throw streamReader.unexpectedContent();
         }
     }
 
-    private static void parseEJBClientType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder) throws ConfigXMLParseException {
+    private static void parseEJBClientType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder, final String namespaceURI) throws ConfigXMLParseException {
         if (streamReader.getAttributeCount() > 0) {
             throw streamReader.unexpectedAttribute(0);
         }
         boolean gotInvocationTimeout = false;
         boolean gotGlobalInterceptors = false;
         boolean gotConnections = false;
+        boolean gotTransactionPropagation = false;
         boolean gotClusterNodeSelector = false;
         boolean gotDeploymentNodeSelector = false;
         boolean gotMaximumConnectedClusterNodes = false;
@@ -123,26 +125,33 @@ final class ConfigurationBasedEJBClientContextSelector {
                 else if (localName.equals("global-interceptors") && ! gotGlobalInterceptors && inValidNamespace(validNamespaces, configuredNamespace)) {
                     gotGlobalInterceptors = true;
                     parseInterceptorsType(streamReader, builder);
-                } 
+                }
                 else if (localName.equals("connections") && ! gotConnections && inValidNamespace(validNamespaces, configuredNamespace)) {
                     gotConnections = true;
                     parseConnectionsType(streamReader, builder);
                 }
                 else  if(localName.equals("deployment-node-selector") && ! gotDeploymentNodeSelector
-                        && inValidNamespace(new HashSet<>(Arrays.asList(NS_EJB_CLIENT_3_1, NS_EJB_CLIENT_3_2)),
+                        && inValidNamespace(new HashSet<>(Arrays.asList(NS_EJB_CLIENT_3_1, NS_EJB_CLIENT_3_2, NS_EJB_CLIENT_3_3)),
                         configuredNamespace)) {
                     gotDeploymentNodeSelector = true;
                     parseDeploymentNodeSelectorType(streamReader, builder);
                 }
                 else  if(localName.equals("cluster-node-selector") && ! gotClusterNodeSelector
-                        && inValidNamespace(new HashSet<>(Arrays.asList(NS_EJB_CLIENT_3_1, NS_EJB_CLIENT_3_2)), configuredNamespace)) {
+                        && inValidNamespace(new HashSet<>(Arrays.asList(NS_EJB_CLIENT_3_1, NS_EJB_CLIENT_3_2, NS_EJB_CLIENT_3_3)),
+                        configuredNamespace)) {
                     gotClusterNodeSelector = true;
                     parseClusterNodeSelectorType(streamReader, builder);
                 }
                 else if (localName.equals("max-allowed-connected-nodes") && ! gotMaximumConnectedClusterNodes
-                        && inValidNamespace(Collections.singleton(NS_EJB_CLIENT_3_2), configuredNamespace)) {
+                        && inValidNamespace(new HashSet<>(Arrays.asList(NS_EJB_CLIENT_3_2, NS_EJB_CLIENT_3_3)),
+                        configuredNamespace)) {
                     gotMaximumConnectedClusterNodes = true;
                     parseMaximumAllowedClusterNodesType(streamReader, builder);
+                }
+                else if (localName.equals("transaction-propagation") && !gotTransactionPropagation
+                        && inValidNamespace(Collections.singleton(NS_EJB_CLIENT_3_3), configuredNamespace)) {
+                    gotTransactionPropagation = true;
+                    parseTransactionPropagationType(streamReader, builder);
                 }
                 else {
                     throw streamReader.unexpectedElement();
@@ -155,10 +164,32 @@ final class ConfigurationBasedEJBClientContextSelector {
         }
     }
 
+    private static void parseTransactionPropagationType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder) throws ConfigXMLParseException {
+        final int attributeCount = streamReader.getAttributeCount();
+        boolean suppress;
+        for (int i = 0; i < attributeCount; i++) {
+            if (streamReader.getAttributeNamespace(i) != null && ! streamReader.getAttributeNamespace(i).isEmpty()) {
+                throw streamReader.unexpectedAttribute(i);
+            }
+            final String name = streamReader.getAttributeLocalName(i);
+            if (name.equals("suppress")) {
+                suppress = streamReader.getBooleanAttributeValueResolved(i);
+            } else {
+                throw streamReader.unexpectedAttribute(i);
+            }
+            builder.setSuppressTxPropagation(suppress);
+        }
+        final int next = streamReader.nextTag();
+        if (next == END_ELEMENT) {
+            return;
+        }
+        throw streamReader.unexpectedElement();
+    }
+
     private static boolean inValidNamespace(Set<String> validNamespaces, String configuredNamespace) {
         return validNamespaces.contains(configuredNamespace);
     }
-    
+
     private static void parseInvocationTimeoutType(final ConfigurationXMLStreamReader streamReader, final EJBClientContext.Builder builder) throws ConfigXMLParseException {
         final int attributeCount = streamReader.getAttributeCount();
         int timeout = -1 ;
@@ -258,7 +289,7 @@ final class ConfigurationBasedEJBClientContextSelector {
         final Class<? extends T> clazz;
         try {
             clazz = Class.forName(className, false, cl).asSubclass(interfaceToImplement);
-            
+
         } catch (ClassNotFoundException | ClassCastException e) {
             throw new ConfigXMLParseException(e);
         }

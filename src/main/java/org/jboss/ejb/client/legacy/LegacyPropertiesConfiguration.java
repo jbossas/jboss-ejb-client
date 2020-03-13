@@ -114,6 +114,10 @@ public class LegacyPropertiesConfiguration {
                 }
             }
 
+            if (properties.isSuppressTxPropagation()) {
+                builder.setSuppressTxPropagation(true); // overwrite previous if in conflict
+            }
+
             if (properties.getInvocationTimeout() != -1L) {
                 builder.setInvocationTimeout(properties.getInvocationTimeout());
             }

@@ -99,6 +99,7 @@ public class JBossEJBPropertiesTestCase {
         // check endpoint common sub-configuration
         Assert.assertEquals("Bad endpoint create options value", endpointCreateOptionMap, properties.getEndpointCreationOptions());
         Assert.assertEquals("Bad endpoint invocation timeout value", 1, properties.getInvocationTimeout());
+        Assert.assertEquals("Bad transaction propagation suppression value", true, properties.isSuppressTxPropagation());
         Assert.assertEquals("Bad endpoint callback handler value", null, properties.getDefaultCallbackHandlerClassName());
 
         // check endpoint authentication

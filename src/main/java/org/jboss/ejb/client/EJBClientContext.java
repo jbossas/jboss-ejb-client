@@ -112,6 +112,7 @@ public final class EJBClientContext extends Attachable implements Contextual<EJB
 
     private final EJBTransportProvider[] transportProviders;
     private final long invocationTimeout;
+    private final boolean suppressTxPropagation;
     private final EJBReceiverContext receiverContext;
     private final List<EJBClientConnection> configuredConnections;
     private final Map<String, EJBClientCluster> configuredClusters;
@@ -147,6 +148,7 @@ public final class EJBClientContext extends Attachable implements Contextual<EJB
             transportProviders = builderTransportProviders.toArray(new EJBTransportProvider[builderTransportProviders.size()]);
         }
         invocationTimeout = builder.invocationTimeout;
+        suppressTxPropagation = builder.suppressTxPropagation;
         receiverContext = new EJBReceiverContext(this);
         final List<EJBClientConnection> clientConnections = builder.clientConnections;
         if (clientConnections == null || clientConnections.isEmpty()) {
@@ -490,6 +492,15 @@ public final class EJBClientContext extends Attachable implements Contextual<EJB
     }
 
     /**
+     * Check whether transaction propagation is suppressed.
+     *
+     * @return true if transaction propagation is suppressed, false otherwise
+     */
+    public boolean isSuppressTxPropagation() {
+        return suppressTxPropagation;
+    }
+
+    /**
      * Get the pre-configured connections for this context.  This information may not be used by some transport providers
      * and mainly exists for legacy compatibility purposes.
      *
@@ -688,6 +699,7 @@ public final class EJBClientContext extends Attachable implements Contextual<EJB
         ClusterNodeSelector clusterNodeSelector = ClusterNodeSelector.DEFAULT_PREFER_LOCAL;
         DeploymentNodeSelector deploymentNodeSelector = DeploymentNodeSelector.RANDOM_PREFER_LOCAL;
         long invocationTimeout;
+        boolean suppressTxPropagation;
         int maximumConnectedClusterNodes = 10;
 
         /**
@@ -828,6 +840,11 @@ public final class EJBClientContext extends Attachable implements Contextual<EJB
         public Builder setInvocationTimeout(final long invocationTimeout) {
             Assert.checkMinimumParameter("invocationTimeout", 0L, invocationTimeout);
             this.invocationTimeout = invocationTimeout;
+            return this;
+        }
+
+        public Builder setSuppressTxPropagation(final boolean suppressTxPropagation) {
+            this.suppressTxPropagation = suppressTxPropagation;
             return this;
         }
 

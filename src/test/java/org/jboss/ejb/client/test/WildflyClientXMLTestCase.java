@@ -37,6 +37,7 @@ public class WildflyClientXMLTestCase {
     private static final String CONFIGURATION_FILE_SYSTEM_PROPERTY_NAME = "wildfly.config.url";
     private static final String CONFIGURATION_FILE = "wildfly-client.xml";
     private static final long INVOCATION_TIMEOUT = 10*1000;
+    private static final boolean SUPPRESS_TX_PROPAGATION = true;
 
     /**
      * Do any general setup here
@@ -56,5 +57,11 @@ public class WildflyClientXMLTestCase {
     public void testInvocationTimeout() {
         EJBClientContext clientContext = EJBClientContext.getCurrent();
         Assert.assertEquals("Got an unexpected timeout value", INVOCATION_TIMEOUT, clientContext.getInvocationTimeout());
+    }
+
+    @Test
+    public void testTransactionPropagation() {
+        EJBClientContext clientContext = EJBClientContext.getCurrent();
+        Assert.assertEquals("Got an unexpected tx propagation suppression value", SUPPRESS_TX_PROPAGATION, clientContext.isSuppressTxPropagation());
     }
 }
