@@ -25,7 +25,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>24</version>
+        <version>37</version>
     </parent>
 
     <artifactId>jboss-ejb-client</artifactId>
@@ -50,7 +50,7 @@
 
     <properties>
         <version.org.jboss.bridger>1.4.Final</version.org.jboss.bridger>
-        <version.org.jboss.byteman>4.0.7</version.org.jboss.byteman>
+        <version.org.jboss.byteman>4.0.14</version.org.jboss.byteman>
         <version.org.jboss.invocation>1.5.0.Final</version.org.jboss.invocation>
         <version.org.jboss.jboss-transaction-spi>7.6.0.Final</version.org.jboss.jboss-transaction-spi>
         <version.org.jboss.logging.jboss-logging>3.4.0.Final</version.org.jboss.logging.jboss-logging>
@@ -74,6 +74,9 @@
         <version.org.wildfly.transaction-client>1.1.10.Final</version.org.wildfly.transaction-client>
 
         <test-group>org/jboss/ejb/client</test-group>
+        <modular.jdk.args/>
+        <byteman.properties>-Dorg.jboss.byteman.verbose -Djdk.attach.allowAttachSelf=true</byteman.properties>
+        <surefire.args>${byteman.properties} ${modular.jdk.args}</surefire.args>
     </properties>
 
     <build>
@@ -336,7 +339,7 @@
         <profile>
             <id>allTests</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <jdk>[8,)</jdk>
             </activation>
             <build>
                 <plugins>
@@ -369,6 +372,7 @@
                                     <excludes>
                                         <exclude>${test-group}/**/byteman/*TestCase.java</exclude>
                                     </excludes>
+                                    <argLine>${surefire.args}</argLine>
                                 </configuration>
                             </execution>
                             <!-- Byteman tests -->
@@ -379,13 +383,13 @@
                                     <goal>test</goal>
                                 </goals>
                                 <configuration>
-                                    <argLine>-Dorg.jboss.byteman.verbose, -Djdk.attach.allowAttachSelf=true</argLine>
                                     <environmentVariables>
                                         <BYTEMAN_HOME/>
                                     </environmentVariables>
                                     <includes>
                                         <include>${test-group}/**/byteman/*TestCase.java</include>
                                     </includes>
+                                    <argLine>${surefire.args}</argLine>
                                 </configuration>
                             </execution>
                         </executions>
@@ -425,6 +429,16 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>JDK9</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <modular.jdk.args>--illegal-access=permit</modular.jdk.args>
+            </properties>
         </profile>
     </profiles>
 
