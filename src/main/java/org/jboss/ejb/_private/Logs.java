@@ -448,6 +448,34 @@ public interface Logs extends BasicLogger {
     @Message(id = 516, value = "Exception resolving class %s for unmarshalling; it has either been blacklisted or not whitelisted")
     InvalidClassException cannotResolveFilteredClass(String clazz);
 
+    @LogMessage(level = WARN)
+    @Message(id = 517, value = "Exception occurred when writing EJB transaction response to invocation %s over channel %s")
+    void ioExceptionOnTransactionResponseWrite(int invId, Channel channel, @Cause IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 518, value = "Exception occurred when writing EJB transaction recovery response for invocation %s over channel %s")
+    void ioExceptionOnTransactionRecoveryResponseWrite(int invId, Channel channel, @Cause IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 519, value = "Exception occurred when writing EJB response to invocation %s over channel %s")
+    void ioExceptionOnEJBResponseWrite(int invId, Channel channel, @Cause IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 520, value = "Exception occurred when writing EJB session open response to invocation %s over channel %s")
+    void ioExceptionOnEJBSessionOpenResponseWrite(int invId, Channel channel, @Cause IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 521, value = "Exception occurred when writing proceed async response to invocation %s over channel %s")
+    void ioExceptionOnProceedAsyncResponseWrite(int invId, Channel channel, @Cause IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 522, value = "Exception occurred when writing EJB cluster message to channel %s")
+    void ioExceptionOnEJBClusterMessageWrite(Channel channel, @Cause IOException e);
+
+    @LogMessage(level = WARN)
+    @Message(id = 523, value = "Exception occurred when writing module availability message, closing channel %s")
+    void ioExceptionOnModuleAvailabilityWrite(Channel channel, @Cause IOException e);
+
     // Remote messages; no ID for brevity but should be translated
 
     @Message(value = "No such EJB: %s")

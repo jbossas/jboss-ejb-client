@@ -276,7 +276,7 @@ final class EJBServerChannel {
                 PackedInteger.writePackedInteger(os, flag);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB transaction response write failed", e);
+                Logs.REMOTING.ioExceptionOnTransactionResponseWrite(invId, channel, e);
             }
         }
 
@@ -287,7 +287,7 @@ final class EJBServerChannel {
                 os.writeBoolean(false);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB transaction response write failed", e);
+                Logs.REMOTING.ioExceptionOnTransactionResponseWrite(invId, channel, e);
             }
         }
 
@@ -386,7 +386,7 @@ final class EJBServerChannel {
                 marshaller.finish();
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB transaction response write failed", e);
+                Logs.REMOTING.ioExceptionOnTransactionRecoveryResponseWrite(invId, channel, e);
             }
         }
 
@@ -522,8 +522,9 @@ final class EJBServerChannel {
             marshaller.writeByte(0);
             marshaller.finish();
         } catch (IOException e2) {
+            e2.addSuppressed(e);
             // nothing to do at this point; the client doesn't want the response
-            Logs.REMOTING.trace("EJB response write failed", e2);
+            Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e2);
         }
     }
 
@@ -571,7 +572,7 @@ final class EJBServerChannel {
                 os.writeUTF(message);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -595,7 +596,7 @@ final class EJBServerChannel {
                 }
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -607,7 +608,7 @@ final class EJBServerChannel {
                 os.writeShort(invId);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -621,7 +622,7 @@ final class EJBServerChannel {
                 os.writeUTF(message);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -657,8 +658,9 @@ final class EJBServerChannel {
                 marshaller.writeByte(0);
                 marshaller.finish();
             } catch (IOException e) {
+                e.addSuppressed(reason);
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -768,7 +770,7 @@ final class EJBServerChannel {
                 }
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB session open response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBSessionOpenResponseWrite(invId, channel, e);
             }
         }
     }
@@ -1009,7 +1011,7 @@ final class EJBServerChannel {
                             os.close();
                         } catch (IOException e) {
                             // nothing to do at this point; the client doesn't want the response
-                            Logs.REMOTING.trace("EJB response write failed", e);
+                            Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
                         } finally {
                             invocations.removeKey(invId);
                         }
@@ -1030,7 +1032,7 @@ final class EJBServerChannel {
                 os.writeShort(invId);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB async response write failed", e);
+                Logs.REMOTING.ioExceptionOnProceedAsyncResponseWrite(invId, channel, e);
             }
         }
 
@@ -1047,7 +1049,7 @@ final class EJBServerChannel {
                 os.writeUTF(message);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -1061,7 +1063,7 @@ final class EJBServerChannel {
                 os.writeUTF(message);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             }
@@ -1086,7 +1088,7 @@ final class EJBServerChannel {
                 os.writeShort(invId);
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB response write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBResponseWrite(invId, channel, e);
             } finally {
                 invocations.removeKey(invId);
             } else {
@@ -1234,7 +1236,7 @@ final class EJBServerChannel {
                 }
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB cluster message write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBClusterMessageWrite(channel, e);
             }
         }
 
@@ -1248,7 +1250,7 @@ final class EJBServerChannel {
                 }
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB cluster message write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBClusterMessageWrite(channel, e);
             }
         }
 
@@ -1278,7 +1280,7 @@ final class EJBServerChannel {
                 }
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB cluster message write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBClusterMessageWrite(channel, e);
             }
         }
 
@@ -1297,7 +1299,7 @@ final class EJBServerChannel {
                 }
             } catch (IOException e) {
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB cluster message write failed", e);
+                Logs.REMOTING.ioExceptionOnEJBClusterMessageWrite(channel, e);
             }
         }
 
@@ -1332,8 +1334,11 @@ final class EJBServerChannel {
                     os.writeUTF(distinctName == null ? "" : distinctName);
                 }
             } catch (IOException e) {
+                // we need to close connection, as module availability messages occurs when establishing a connection to the server
+                // prior to sending an invocation request (this will prevent a frozen client at the other side)
+                channel.closeAsync();
                 // nothing to do at this point; the client doesn't want the response
-                Logs.REMOTING.trace("EJB availability message write failed", e);
+                Logs.REMOTING.ioExceptionOnModuleAvailabilityWrite(channel, e);
             }
         }
     }
